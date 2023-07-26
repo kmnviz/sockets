@@ -29,10 +29,42 @@
         #chat-password:hover {
             cursor: pointer;
         }
-        #main {
-            width: 100vw;
-            height: calc(100vh - 64px);
+        #main-form-wrapper {
             display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #main-form {
+            display: flex;
+            flex-direction: column;
+            width: 420px;
+            margin-top: 120px;
+        }
+        .main-form-input-wrapper {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-form-input {
+            margin-top: 4px;
+            height: 24px;
+            border-radius: 4px;
+            box-shadow: inset 0 0 0 1px #333;
+        }
+        #main-form-submit {
+            margin-top: 16px;
+            height: 24px;
+            border-radius: 4px;
+            background-color: #000;
+            color: #fff;
+        }
+        #main-form-submit:hover {
+            cursor: pointer;
+        }
+        #main-chat-wrapper {
+            width: 100vw;
+            height: 100vh;
+            display: none;
             flex-direction: column;
             position: relative;
         }
@@ -41,7 +73,7 @@
             display: flex;
             flex-direction: column-reverse;
             overflow: scroll;
-            max-height: calc(100vh - 128px);
+            max-height: calc(100vh - 64px);
         }
         .chat-log-element {
             width: 100%;
@@ -91,10 +123,23 @@
     </style>
 </head>
 <body>
-    <div id="chat-password-wrapper">
-        <p id="chat-password"></p>
+    <div id="main-form-wrapper">
+        <form id="main-form">
+            <div class="main-form-input-wrapper">
+                <label for="main-form-relay-address">Relay address</label>
+                <input id="main-form-relay-address" class="main-form-input" type="text" />
+            </div>
+            <div class="main-form-input-wrapper">
+                <label for="main-form-chat-password">Chat password</label>
+                <input id="main-form-chat-password" class="main-form-input" type="text" />
+            </div>
+            <button id="main-form-submit" type="submit">save</button>
+        </form>
     </div>
-    <div id="main">
+    <div id="main-chat-wrapper">
+        <div id="chat-password-wrapper">
+            <p id="chat-password"></p>
+        </div>
         <div id="chat-log">
             <div class="log-item"></div>
         </div>
@@ -106,21 +151,18 @@
         </div>
     </div>
     <script>
-        const queryParams = new URLSearchParams(window.location.search);
-        const hasPassword = !!queryParams.get('password');
+        // Global
+        let relayAddress, chatPassword;
 
-        const generateRandomString = (length) => {
-            const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            const randomValues = new Uint32Array(length);
-            crypto.getRandomValues(randomValues);
-            return Array.from(randomValues).map((value) => charset[value % charset.length]).join('');
-        }
+        // Initialization stage
+        document.getElementById('main-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            relayAddress = document.getElementById('main-form-relay-address').value;
+            chatPassword = document.getElementById('main-form-chat-password').value;
+            document.getElementById('main-form-wrapper').style.display = 'none';
+            document.getElementById('main-chat-wrapper').style.display = 'flex';
 
-        const password = !hasPassword ? generateRandomString(64) : queryParams.get('password');
-        const chatPasswordElement = document.getElementById('chat-password');
-        chatPasswordElement.textContent = password;
-        chatPasswordElement.addEventListener('click', () => {
-            navigator.clipboard.writeText(password);
+            await initializeChat();
         });
 
         const buff_to_base64 = (buff) => btoa(new Uint8Array(buff).reduce((data, byte) => data + String.fromCharCode(byte), ''));
@@ -166,10 +208,16 @@
             }
         }
 
-        (async () => {
-            const passwordKey = await window.crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+        const initializeChat = async () => {
+            const chatPasswordElement = document.getElementById('chat-password');
+            chatPasswordElement.textContent = chatPassword;
+            chatPasswordElement.addEventListener('click', () => {
+                navigator.clipboard.writeText(chatPassword);
+            });
 
-            const socket = new WebSocket('ws://127.0.0.1:7369');
+            const passwordKey = await window.crypto.subtle.importKey('raw', enc.encode(chatPassword), 'PBKDF2', false, ['deriveKey']);
+
+            const socket = new WebSocket(`ws://${relayAddress}`);
 
             socket.addEventListener('open', () => {
                 console.log(`Connected to 127.0.0.1:7369`);
@@ -192,7 +240,7 @@
                 socket.send(await encryptData(message, passwordKey));
                 messageInput.value = '';
             });
-        })();
+        }
     </script>
 </body>
 </html>
