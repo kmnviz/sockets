@@ -19,13 +19,33 @@ and to use it for communication.
 - Client side password based key derivation
 - Used advanced encryption standard
 - Chat history stored only in browser session
-- WebSocket-based relay servers every user can open
+- WebSocket-based relay servers
 
 # The Flow
-- Page where user sets relay address and chat password
+- Page where user sets relay address, chat room name and chat password
 - Chat window with message input, submit button, chat log and system info
+
+# Relay
+The Relay is a simple NodeJS application on which simple WebSocket server
+runs. To avoid run of different instance of server for each chat session,
+chat rooms are foreseen, and a capacity of maximum simultaneous connections 
+that relay server will handle at a time. This requires to set a chat room 
+name on a chat session initialization. When a user requires to join a room
+that not exist the room creates and when the last user from a room left
+the chat room closes itself with no history left behind.
 
 ---
 
 #### TODO:
 - Open a relay
+- Initialize session
+- Connect to existing session
+- Download the history locally
+- List of available relays
+- Set custom rules for the room
+
+#### Links
+- https://github.com/bradyjoslin/webcrypto-example
+
+#### Various
+- Short-lived client side encrypted chat sessions

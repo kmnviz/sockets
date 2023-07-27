@@ -130,6 +130,10 @@
                 <input id="main-form-relay-address" class="main-form-input" type="text" />
             </div>
             <div class="main-form-input-wrapper">
+                <label for="main-form-chat-room-name">Chat room name</label>
+                <input id="main-form-chat-room-name" class="main-form-input" type="text" />
+            </div>
+            <div class="main-form-input-wrapper">
                 <label for="main-form-chat-password">Chat password</label>
                 <input id="main-form-chat-password" class="main-form-input" type="text" />
             </div>
@@ -152,24 +156,25 @@
     </div>
     <script>
         // Global
-        let relayAddress, chatPassword;
+        let relayAddress, chatRoomName, chatPassword;
+        const enc = new TextEncoder();
+        const dec = new TextDecoder();
+        const buff_to_base64 = (buff) => btoa(new Uint8Array(buff).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+        const base64_to_buff = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(null));
 
         // Initialization stage
         document.getElementById('main-form').addEventListener('submit', async (event) => {
             event.preventDefault();
             relayAddress = document.getElementById('main-form-relay-address').value;
             chatPassword = document.getElementById('main-form-chat-password').value;
+            chatRoomName = document.getElementById('main-form-chat-room-name').value;
             document.getElementById('main-form-wrapper').style.display = 'none';
             document.getElementById('main-chat-wrapper').style.display = 'flex';
 
             await initializeChat();
         });
 
-        const buff_to_base64 = (buff) => btoa(new Uint8Array(buff).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-        const base64_to_buff = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(null));
-        const enc = new TextEncoder();
-        const dec = new TextDecoder();
-
+        // Chat stage
         const deriveKey = async (passwordKey, salt, keyUsage) => {
             return await window.crypto.subtle.deriveKey({name: 'PBKDF2', salt: salt, iterations: 250000, hash: 'SHA-256'}, passwordKey, { name: 'AES-GCM', length: 256 }, false, keyUsage);
         };
@@ -204,7 +209,7 @@
                 return dec.decode(decryptedContent);
             } catch (e) {
                 console.log(`Error - ${e}`);
-                return "";
+                return 'Decrypted...';
             }
         }
 
@@ -220,16 +225,16 @@
             const socket = new WebSocket(`ws://${relayAddress}`);
 
             socket.addEventListener('open', () => {
-                console.log(`Connected to 127.0.0.1:7369`);
+                console.log(`Connected to ${relayAddress}`);
+                socket.send(JSON.stringify({ room: chatRoomName }));
             });
 
             socket.addEventListener('message', async (event) => {
                 const chatLog = document.getElementById('chat-log');
                 const chatLogElement = document.createElement('div');
-                const userId = event.data.split(':')[0];
-                const message = event.data.split(':')[1];
+                const message = JSON.parse(event.data);
                 chatLogElement.className = 'chat-log-element';
-                chatLogElement.textContent = `${userId}: ${await decryptData(message, passwordKey)}`;
+                chatLogElement.textContent = `${message.client_id}: ${await decryptData(message.content, passwordKey)}`;
                 chatLog.prepend(chatLogElement);
             });
 
@@ -237,7 +242,10 @@
                 event.preventDefault();
                 const messageInput = document.getElementById('message-input');
                 const message = messageInput.value;
-                socket.send(await encryptData(message, passwordKey));
+                socket.send(JSON.stringify({
+                    room: chatRoomName,
+                    content: await encryptData(message, passwordKey)
+                }));
                 messageInput.value = '';
             });
         }
