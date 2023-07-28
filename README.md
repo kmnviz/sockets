@@ -15,6 +15,24 @@ to encrypt the transmitted data. To transmit the data will be used
 simple NodeJS WebSocket server, that each user will be able to open
 and to use it for communication.
 
+The mission is to keep it as simple as possible.
+
+# Client
+Client must stay as simple as it is possible. Everyone should be able to
+read the client.html file and to understand that the messages are encrypted
+and the password is not transmitted across the internet. The client must be
+open source. Every one should be able to download the client on his local
+machine and to use it.
+
+# Relay
+The Relay is a simple NodeJS application on which simple WebSocket server
+runs. To avoid run of different instance of server for each chat session,
+chat rooms are foreseen, and a capacity of maximum simultaneous connections
+that relay server will handle at a time. This requires to set a chat room
+name on a chat session initialization. When a user requires to join a room
+that not exist the room creates and when the last user from a room left
+the chat room closes itself with no history left behind.
+
 # Includes
 - Client side password based key derivation
 - Used advanced encryption standard
@@ -24,15 +42,6 @@ and to use it for communication.
 # The Flow
 - Page where user sets relay address, chat room name and chat password
 - Chat window with message input, submit button, chat log and system info
-
-# Relay
-The Relay is a simple NodeJS application on which simple WebSocket server
-runs. To avoid run of different instance of server for each chat session,
-chat rooms are foreseen, and a capacity of maximum simultaneous connections 
-that relay server will handle at a time. This requires to set a chat room 
-name on a chat session initialization. When a user requires to join a room
-that not exist the room creates and when the last user from a room left
-the chat room closes itself with no history left behind.
 
 ---
 

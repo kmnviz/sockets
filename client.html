@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Client</title>
+    <title>Telepath client</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/reset-css@5.0.1/reset.min.css" rel="stylesheet">
     <style>
@@ -12,7 +12,7 @@
         textarea:focus, input:focus, button:focus {
             outline: none;
         }
-        #chat-password-wrapper {
+        #chat-room-name-wrapper {
             width: 100%;
             height: 64px;
             display: flex;
@@ -20,25 +20,30 @@
             justify-content: center;
             position: relative;
         }
-        #chat-password {
+        #chat-room-name {
             color: #000;
             text-align: center;
             user-select: none;
             font-size: 20px;
         }
-        #chat-password:hover {
+        #chat-room-name:hover {
             cursor: pointer;
         }
         #main-form-wrapper {
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
+        }
+        #main-form-title {
+            text-align: center;
+            margin-top: 120px;
         }
         #main-form {
+            margin-top: 16px;
             display: flex;
             flex-direction: column;
             width: 420px;
-            margin-top: 120px;
         }
         .main-form-input-wrapper {
             margin-top: 8px;
@@ -93,8 +98,8 @@
         }
         #message-form {
             width: calc(100% - 32px);
-            height: 48px;
-            background-color: rgba(255, 255, 255, 1);
+            height: 64px;
+            background-color: rgba(238, 238, 238, 1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -124,25 +129,26 @@
 </head>
 <body>
     <div id="main-form-wrapper">
+        <h1 id="main-form-title">Telepath chat</h1>
         <form id="main-form">
             <div class="main-form-input-wrapper">
                 <label for="main-form-relay-address">Relay address</label>
                 <input id="main-form-relay-address" class="main-form-input" type="text" />
             </div>
             <div class="main-form-input-wrapper">
-                <label for="main-form-chat-room-name">Chat room name</label>
+                <label for="main-form-chat-room-name">Room name</label>
                 <input id="main-form-chat-room-name" class="main-form-input" type="text" />
             </div>
             <div class="main-form-input-wrapper">
-                <label for="main-form-chat-password">Chat password</label>
+                <label for="main-form-chat-password">Password</label>
                 <input id="main-form-chat-password" class="main-form-input" type="text" />
             </div>
             <button id="main-form-submit" type="submit">save</button>
         </form>
     </div>
     <div id="main-chat-wrapper">
-        <div id="chat-password-wrapper">
-            <p id="chat-password"></p>
+        <div id="chat-room-name-wrapper">
+            <p id="chat-room-name"></p>
         </div>
         <div id="chat-log">
             <div class="log-item"></div>
@@ -170,6 +176,7 @@
             chatRoomName = document.getElementById('main-form-chat-room-name').value;
             document.getElementById('main-form-wrapper').style.display = 'none';
             document.getElementById('main-chat-wrapper').style.display = 'flex';
+            document.getElementById('main-form-chat-password').value = '';
 
             await initializeChat();
         });
@@ -214,13 +221,14 @@
         }
 
         const initializeChat = async () => {
-            const chatPasswordElement = document.getElementById('chat-password');
-            chatPasswordElement.textContent = chatPassword;
-            chatPasswordElement.addEventListener('click', () => {
-                navigator.clipboard.writeText(chatPassword);
+            const chatRoomNameElement = document.getElementById('chat-room-name');
+            chatRoomNameElement.textContent = chatRoomName;
+            chatRoomNameElement.addEventListener('click', () => {
+                navigator.clipboard.writeText(chatRoomName);
             });
 
             const passwordKey = await window.crypto.subtle.importKey('raw', enc.encode(chatPassword), 'PBKDF2', false, ['deriveKey']);
+            chatPassword = null;
 
             const socket = new WebSocket(`ws://${relayAddress}`);
 
