@@ -1,8 +1,11 @@
-const { WebSocketServer } = require('ws');
-const port = 7369;
-const host = '127.0.0.1';
-const capacity = 1000;
+const hostArgIndex = process.argv.findIndex((el) => el === '-h');
+const portArgIndex = process.argv.findIndex((el) => el === '-p');
+const capacityArgIndex = process.argv.findIndex((el) => el === '-c');
+const host = hostArgIndex !== -1 ? process.argv[hostArgIndex + 1] : '';
+const port = portArgIndex !== -1 ? process.argv[portArgIndex + 1] : 7369;
+const capacity = capacityArgIndex !== -1 ? process.argv[capacityArgIndex + 1] : 1000;
 
+const { WebSocketServer } = require('ws');
 const server = new WebSocketServer({ port, host });
 const rooms = {};
 
@@ -81,7 +84,7 @@ server.on('connection', (socket) => {
 
         if (currentClient && currentClientRoomName) {
             removeClientFromRoom(currentClient, currentClientRoomName);
-            
+
             console.log(`Client ${currentClient.id}:${currentClient.nickname} left ${currentClientRoomName}`);
 
             if (!rooms[currentClientRoomName].clients.length) {
@@ -111,4 +114,4 @@ server.on('connection', (socket) => {
     });
 });
 
-console.log(`server listens on ${host}:${port}`);
+console.log(`server listens on ${host}:${port} [capacity: ${capacity}]`);
