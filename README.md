@@ -55,6 +55,7 @@ the chat room closes itself with no history left behind.
 - Set custom rules for the room
 - Ensure users that running relays uses identical codebase (checksum?)
 - Show list of relays that are available
+- Add room is opened by
 
 #### Links
 - https://github.com/bradyjoslin/webcrypto-example

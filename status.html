@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Telepath client</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/reset-css@5.0.1/reset.min.css" rel="stylesheet">
+    <style>
+        input, button {
+            border: 0;
+        }
+        textarea:focus, input:focus, button:focus {
+            outline: none;
+        }
+        #main-wrapper {
+            padding: 16px 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-wrapper">
+        <p id="relay-1-status"></p>
+    </div>
+    <script>
+        const STATUS = {
+            0: 'CONNECTING',
+            1: 'OPEN',
+            2: 'CLOSING',
+            3: 'CLOSED',
+        }
+
+        const RELAYS = [
+            {
+                name: 'relay1',
+                host: '127.0.0.1',
+                port: '7369',
+                schema: 'ws',
+                server: null,
+            }
+        ];
+
+        for (let i = 0; i < RELAYS.length; i++) {
+            RELAYS[i].server = new WebSocket(`${RELAYS[i].schema}://${RELAYS[i].host}:${RELAYS[i].port}`);
+            RELAYS[i].server.addEventListener('open', () => { RELAYS[i].server.send(JSON.stringify({ status: true })) });
+            const mainWrapperElement = document.getElementById('main-wrapper');
+            const relayStatusElement = document.createElement('p');
+            relayStatusElement.id = `relay-status-${RELAYS[i].name}`;
+            relayStatusElement.textContent = `${RELAYS[i].name} - ${STATUS[RELAYS[i].server.readyState]}`;
+            mainWrapperElement.append(relayStatusElement);
+        }
+
+        setInterval(() => {
+            for (let i = 0; i < RELAYS.length; i++) {
+                document.getElementById(`relay-status-${RELAYS[i].name}`).textContent = `${RELAYS[i].name} - ${STATUS[RELAYS[i].server.readyState]}`;
+            }
+        }, 1000);
+    </script>
+</body>

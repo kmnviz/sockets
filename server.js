@@ -39,6 +39,11 @@ server.on('connection', (socket) => {
 
     socket.on('message', (message) => {
         const messageObject = JSON.parse(message.toString());
+
+        if ('status' in messageObject) {
+            return;
+        }
+
         if (!(`room` in messageObject)) {
             socket.send(`Bad message format`);
             socket.terminate();
@@ -73,13 +78,16 @@ server.on('connection', (socket) => {
     socket.on('close', () => {
         const currentClient = defineCurrentClient(socket);
         const currentClientRoomName = defineClientRoomName(currentClient);
-        removeClientFromRoom(currentClient, currentClientRoomName);
 
-        console.log(`Client ${currentClient.id}:${currentClient.nickname} left ${currentClientRoomName}`);
+        if (currentClient && currentClientRoomName) {
+            removeClientFromRoom(currentClient, currentClientRoomName);
+            
+            console.log(`Client ${currentClient.id}:${currentClient.nickname} left ${currentClientRoomName}`);
 
-        if (!rooms[currentClientRoomName].clients.length) {
-            delete rooms[currentClientRoomName];
-            console.log(`${currentClientRoomName} was closed`);
+            if (!rooms[currentClientRoomName].clients.length) {
+                delete rooms[currentClientRoomName];
+                console.log(`${currentClientRoomName} was closed`);
+            }
         }
     });
 
@@ -89,16 +97,18 @@ server.on('connection', (socket) => {
         const currentClient = defineCurrentClient(socket);
         const currentClientRoomName = defineClientRoomName(currentClient);
 
-        console.error(`Client ${currentClient.id}:${currentClient.nickname} received error: ${error}`);
-        socket.terminate();
-        removeClientFromRoom(currentClient, currentClientRoomName);
-        console.error(`Client ${currentClient.id}:${currentClient.nickname} was removed from ${currentClientRoomName}`);
+        if (currentClient && currentClientRoomName) {
+            console.error(`Client ${currentClient.id}:${currentClient.nickname} received error: ${error}`);
+            socket.terminate();
+            removeClientFromRoom(currentClient, currentClientRoomName);
+            console.error(`Client ${currentClient.id}:${currentClient.nickname} was removed from ${currentClientRoomName}`);
 
-        if (!rooms[currentClientRoomName].clients.length) {
-            delete rooms[currentClientRoomName];
-            console.log(`${currentClientRoomName} was closed`);
+            if (!rooms[currentClientRoomName].clients.length) {
+                delete rooms[currentClientRoomName];
+                console.log(`${currentClientRoomName} was closed`);
+            }
         }
     });
 });
 
-console.log(`server listens on 127.0.0.1:7369`);
+console.log(`server listens on ${host}:${port}`);
