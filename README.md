@@ -15,7 +15,8 @@ to encrypt the transmitted data. To transmit the data will be used
 simple NodeJS WebSocket server, that each user will be able to open
 and to use it for communication.
 
-The mission is to keep it as simple as possible.
+The mission is to keep it as simple as possible. Everyone can run a relay.
+Relay for chat session can be selected. No history is stored.
 
 # Client
 Client must stay as simple as it is possible. Everyone should be able to
@@ -52,6 +53,8 @@ the chat room closes itself with no history left behind.
 - Download the history locally
 - List of available relays
 - Set custom rules for the room
+- Ensure users that running relays uses identical codebase (checksum?)
+- Show list of relays that are available
 
 #### Links
 - https://github.com/bradyjoslin/webcrypto-example

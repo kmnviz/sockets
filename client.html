@@ -12,23 +12,6 @@
         textarea:focus, input:focus, button:focus {
             outline: none;
         }
-        #chat-room-name-wrapper {
-            width: 100%;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        #chat-room-name {
-            color: #000;
-            text-align: center;
-            user-select: none;
-            font-size: 20px;
-        }
-        #chat-room-name:hover {
-            cursor: pointer;
-        }
         #main-form-wrapper {
             display: flex;
             justify-content: center;
@@ -73,6 +56,25 @@
             flex-direction: column;
             position: relative;
         }
+        #chat-room-name-wrapper {
+            width: 100%;
+            height: 64px;
+            position: fixed;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+        }
+        #chat-room-name {
+            color: #000;
+            text-align: center;
+            user-select: none;
+            font-size: 20px;
+        }
+        #chat-room-name:hover {
+            cursor: pointer;
+        }
         #chat-log {
             flex: 1 auto;
             display: flex;
@@ -80,12 +82,17 @@
             overflow: scroll;
             max-height: calc(100vh - 64px);
         }
-        .chat-log-element {
+        .chat-log-item {
             width: 100%;
             padding: 8px;
-            display: flex;
-            align-items: center;
-            font-size: 20px;
+        }
+        .chat-log-item-nickname {
+            font-size: 12px;
+            margin-bottom: 4px;
+            font-style: italic;
+        }
+        .chat-log-item-message {
+            font-size: 16px;
         }
         #message-form-wrapper {
             width: 100%;
@@ -140,6 +147,10 @@
                 <input id="main-form-chat-room-name" class="main-form-input" type="text" />
             </div>
             <div class="main-form-input-wrapper">
+                <label for="main-form-chat-nickname">Nickname</label>
+                <input id="main-form-chat-nickname" class="main-form-input" type="text" />
+            </div>
+            <div class="main-form-input-wrapper">
                 <label for="main-form-chat-password">Password</label>
                 <input id="main-form-chat-password" class="main-form-input" type="text" />
             </div>
@@ -150,9 +161,7 @@
         <div id="chat-room-name-wrapper">
             <p id="chat-room-name"></p>
         </div>
-        <div id="chat-log">
-            <div class="log-item"></div>
-        </div>
+        <div id="chat-log"></div>
         <div id="message-form-wrapper">
             <form id="message-form">
                 <input id="message-input"/>
@@ -162,7 +171,7 @@
     </div>
     <script>
         // Global
-        let relayAddress, chatRoomName, chatPassword;
+        let relayAddress, chatRoomName, chatNickname, chatPassword;
         const enc = new TextEncoder();
         const dec = new TextDecoder();
         const buff_to_base64 = (buff) => btoa(new Uint8Array(buff).reduce((data, byte) => data + String.fromCharCode(byte), ''));
@@ -174,6 +183,7 @@
             relayAddress = document.getElementById('main-form-relay-address').value;
             chatPassword = document.getElementById('main-form-chat-password').value;
             chatRoomName = document.getElementById('main-form-chat-room-name').value;
+            chatNickname = document.getElementById('main-form-chat-nickname').value;
             document.getElementById('main-form-wrapper').style.display = 'none';
             document.getElementById('main-chat-wrapper').style.display = 'flex';
             document.getElementById('main-form-chat-password').value = '';
@@ -201,7 +211,7 @@
                 return buff_to_base64(buff);
             } catch (e) {
                 console.log(`Error - ${e}`);
-                return "";
+                return '';
             }
         }
 
@@ -216,8 +226,23 @@
                 return dec.decode(decryptedContent);
             } catch (e) {
                 console.log(`Error - ${e}`);
-                return 'Decrypted...';
+                return encryptedData;
             }
+        }
+
+        const buildChatLogElement = (nickname, message) => {
+            const chatLogElement = document.createElement('div');
+            chatLogElement.className = 'chat-log-item';
+            const chatLogNicknameElement = document.createElement('p');
+            chatLogNicknameElement.textContent = `${nickname}:`;
+            const chatLogMessageElement = document.createElement('p');
+            chatLogMessageElement.textContent = message;
+            chatLogNicknameElement.className = 'chat-log-item-nickname';
+            chatLogMessageElement.className = 'chat-log-item-message';
+            chatLogElement.append(chatLogNicknameElement);
+            chatLogElement.append(chatLogMessageElement);
+
+            return chatLogElement;
         }
 
         const initializeChat = async () => {
@@ -234,15 +259,13 @@
 
             socket.addEventListener('open', () => {
                 console.log(`Connected to ${relayAddress}`);
-                socket.send(JSON.stringify({ room: chatRoomName }));
+                socket.send(JSON.stringify({ room: chatRoomName, nickname: chatNickname }));
             });
 
             socket.addEventListener('message', async (event) => {
                 const chatLog = document.getElementById('chat-log');
-                const chatLogElement = document.createElement('div');
                 const message = JSON.parse(event.data);
-                chatLogElement.className = 'chat-log-element';
-                chatLogElement.textContent = `${message.client_id}: ${await decryptData(message.content, passwordKey)}`;
+                const chatLogElement = buildChatLogElement(message.nickname, await decryptData(message.content, passwordKey));
                 chatLog.prepend(chatLogElement);
             });
 
@@ -250,11 +273,14 @@
                 event.preventDefault();
                 const messageInput = document.getElementById('message-input');
                 const message = messageInput.value;
-                socket.send(JSON.stringify({
-                    room: chatRoomName,
-                    content: await encryptData(message, passwordKey)
-                }));
-                messageInput.value = '';
+                if (message !== '') {
+                    socket.send(JSON.stringify({
+                        room: chatRoomName,
+                        nickname: chatNickname,
+                        content: await encryptData(message, passwordKey)
+                    }));
+                    messageInput.value = '';
+                }
             });
         }
     </script>

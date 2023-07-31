@@ -45,24 +45,25 @@ server.on('connection', (socket) => {
         }
 
         if (!('content' in messageObject)) {
-            const newClient = { id: Math.floor(Math.random(0, 10) * 1000), socket: socket };
+            const newClient = { id: Math.floor(Math.random(0, 10) * 1000), nickname: messageObject.nickname, socket: socket };
 
             if (!(messageObject.room in rooms)) {
                 rooms[messageObject.room] = {};
                 rooms[messageObject.room]['clients'] = [];
-                console.log(`Client ${newClient.id} created ${messageObject.room}`);
+                console.log(`Client ${newClient.id}:${newClient.nickname} created ${messageObject.room}`);
             }
 
             rooms[messageObject.room]['clients'].push(newClient);
             clients++;
 
-            console.log(`Client ${newClient.id} joined ${messageObject.room}`);
+            console.log(`Client ${newClient.id}:${newClient.nickname} joined ${messageObject.room}`);
         } else {
             const sender = rooms[messageObject.room].clients.find((client) => client.socket === socket);
             rooms[messageObject.room].clients.forEach((client) => {
                 client.socket.send(JSON.stringify({
                     room: messageObject.room,
                     client_id: sender.id,
+                    nickname: sender.nickname,
                     content: messageObject.content,
                 }));
             });
@@ -74,7 +75,7 @@ server.on('connection', (socket) => {
         const currentClientRoomName = defineClientRoomName(currentClient);
         removeClientFromRoom(currentClient, currentClientRoomName);
 
-        console.log(`Client ${currentClient.id} left ${currentClientRoomName}`);
+        console.log(`Client ${currentClient.id}:${currentClient.nickname} left ${currentClientRoomName}`);
 
         if (!rooms[currentClientRoomName].clients.length) {
             delete rooms[currentClientRoomName];
@@ -88,10 +89,10 @@ server.on('connection', (socket) => {
         const currentClient = defineCurrentClient(socket);
         const currentClientRoomName = defineClientRoomName(currentClient);
 
-        console.error(`Client ${currentClient.id} received error: ${error}`);
+        console.error(`Client ${currentClient.id}:${currentClient.nickname} received error: ${error}`);
         socket.terminate();
         removeClientFromRoom(currentClient, currentClientRoomName);
-        console.error(`Client ${currentClient.id} was removed from ${currentClientRoomName}`);
+        console.error(`Client ${currentClient.id}:${currentClient.nickname} was removed from ${currentClientRoomName}`);
 
         if (!rooms[currentClientRoomName].clients.length) {
             delete rooms[currentClientRoomName];
