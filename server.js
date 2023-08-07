@@ -9,17 +9,9 @@ if (!fs.existsSync(logDir)) {
 const jsonLogFilePath = path.join(logDir, 'log.json');
 const textLogFilePath = path.join(logDir, 'log.txt');
 
-process.on('uncaughtException', (error) => {
-    const logMessage = `[Uncaught Exception] ${new Date().toISOString()} - ${error.stack || error}`;
-    console.error(logMessage);
-
-    appendToFile(jsonLogFilePath, logMessage, true);
-    appendToFile(textLogFilePath, logMessage);
-
-    process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
+process.on(['unhandledRejection', 'uncaughtException', 'SIGTERM', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGUSR1', 'SIGUSR2',
+    'beforeExit', 'exit', 'EADDRINUSE', 'EADDRNOTAVAIL', 'ECONNREFUSED', 'ENOTFOUND', 'EPERM', 'EACCES', 'EMFILE', 'ENFILE',
+    'ETIMEDOUT', 'EPIPE', 'EBUSY', 'EEXIST', 'ECONNRESET', 'SIGPIPE'], (reason, promise) => {
     const logMessage = `[Unhandled Rejection] ${new Date().toISOString()} - Reason: ${reason}`;
     console.error(logMessage);
 
