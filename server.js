@@ -1,3 +1,37 @@
+const fs = require('fs');
+const path = require('path');
+
+const logDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir);
+}
+
+const jsonLogFilePath = path.join(logDir, 'log.json');
+const textLogFilePath = path.join(logDir, 'log.txt');
+
+process.on('uncaughtException', (error) => {
+    const logMessage = `[Uncaught Exception] ${new Date().toISOString()} - ${error.stack || error}`;
+    console.error(logMessage);
+
+    appendToFile(jsonLogFilePath, logMessage, true);
+    appendToFile(textLogFilePath, logMessage);
+
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    const logMessage = `[Unhandled Rejection] ${new Date().toISOString()} - Reason: ${reason}`;
+    console.error(logMessage);
+
+    appendToFile(jsonLogFilePath, logMessage, true);
+    appendToFile(textLogFilePath, logMessage);
+});
+
+function appendToFile(filePath, data, newLine = false) {
+    fs.appendFileSync(filePath, data + (newLine ? '\n' : ''));
+}
+
+// ----------
 const hostArgIndex = process.argv.findIndex((el) => el === '-h');
 const portArgIndex = process.argv.findIndex((el) => el === '-p');
 const capacityArgIndex = process.argv.findIndex((el) => el === '-c');
